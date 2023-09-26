@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[project]
+name = "sxope-nbinstaller"
+description = "notebook installer support"
+version = "0.0.0"
+requires-python = ">=3.8"
+
+authors = [
+    { name = "Antonio Cavallo", email = "a.cavallo@cavallinux.eu" }
+]
+dependencies = [
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sxope_nbinstaller"]
+
+#[tool.hatch.build.targets.wheel.force-include]
+#"src/bigq/queries" = "bigq"
+
+
+[tool.pytest.ini_options]
+addopts = "--strict-markers"
