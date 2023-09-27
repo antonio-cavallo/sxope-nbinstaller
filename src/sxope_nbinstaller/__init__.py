@@ -22,6 +22,14 @@ def task(msg):
     return _fn0
 
 
+@task("mounting gdrive under {mountpoint} (readonly? {readonly})")
+def mount(mountpoint, readonly=True):
+  from google.colab import drive
+  with mock.patch('sys.stdout', new_callable=io.StringIO) as mck:
+    drive.mount(str(mountpoint), force_remount=True, readonly=readonly)
+  return Path(mountpoint)
+
+
 # @task("authorizing colab")
 # def auth():
 #   from google.colab import auth
@@ -31,12 +39,6 @@ def task(msg):
 #   #client = bigquery.Client(project="pp-import-staging")
 # 
 # 
-# @task("mounting gdrive under {mountpoint}")
-# def mount(mountpoint):
-#   from google.colab import drive
-#   with mock.patch('sys.stdout', new_callable=io.StringIO) as mck:
-#     drive.mount(mountpoint, force_remount=True, readonly=True)
-#   return Path(mountpoint)
 # 
 # 
 # @task("setup bigq")
@@ -66,6 +68,11 @@ def install(
         return
 
     if mode in { "dev", "dev-install" }:
-        print(f'❌ In dev mode you need to call install("{mode}", mountpoint=..., destdir=...')
+        print(f'''\
+❌ In dev mode you need the mountpoint/destdir args:
+
+    sxope_nbinstaller.install("{mode}", mountpoint=..., destdir=...)
+''')
         return
 
+    mount(mountpoint, readonly=True if mode == "dev" else False)
