@@ -84,11 +84,11 @@ def add_pypath(path):
 
 
 @task("install bigq package")
-def install(token):
+def install(token, ref=""):
     cmd = [
         "pip", "install",
         "--force-reinstall",
-        f"git+https://{token}@github.com/antonio-cavallo/sxope-bigq{ver}"
+        f"git+https://{token}@github.com/antonio-cavallo/sxope-bigq{ref}"
     ]
     run = subprocess.check_output([str(c) for c in cmd], encoding="utf-8")
     print(f"installed sxope-bigq package")
