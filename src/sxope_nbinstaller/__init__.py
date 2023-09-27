@@ -64,7 +64,9 @@ def checkout(token, destdir):
         f"https://{token}@github.com/antonio-cavallo/sxope-bigq.git",
         destdir
     ]
-    run = subprocess.run([str(c) for c in cmd], stdout=subprocess.PIPE, encoding="utf-8")
+    cmd = [str(c) for c in cmd]
+
+    run = subprocess.run(cmd, stdout=subprocess.PIPE, encoding="utf-8")
     if run.returncode != 0:
         raise RuntimeError(f"""\
 failed to checkout code:
