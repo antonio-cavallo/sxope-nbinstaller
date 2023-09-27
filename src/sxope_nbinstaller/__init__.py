@@ -56,7 +56,10 @@ def mount(mountpoint: Path, readonly: bool = True) -> Path:
 @task("checkout source code for sxope-bigq in '{destdir}'")
 def checkout(token, destdir):
     if destdir.exists():
-        print(f"{W} {destdir} is present, not checking out sxope-bigq")
+        print(f"""\
+{W} {destdir} is present, not checking out sxope-bigq
+  (did you mean to use the mode='dev'?)
+""")
         return
     
     cmd = [
@@ -140,14 +143,12 @@ def setup(
     mount(mountpoint, readonly=True if mode == "dev" else False)
     
     if mode == "dev-install":
-        if destdir.exists():
-            print(f"""\
-{W} destdir {destdir} present, not checking out source code
-  (did you mean to use the mode='dev'?)""")
-        else:
+        token = None
+        if not destdir.exists():
             token = getpass.getpass("Please provide the token for sxope-bigq: ")
-            checkout(token, destdir)
+        checkout(token, destdir)
     
+
     add_pypath(destdir / "src")
 
     # moment of truth
