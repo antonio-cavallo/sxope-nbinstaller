@@ -49,7 +49,7 @@ def mount(mountpoint: Path, readonly: bool = True) -> Path:
     from google.colab import drive
     with mock.patch('sys.stdout', new_callable=io.StringIO) as mck:
         drive.mount(str(mountpoint), force_remount=True, readonly=readonly)
-    print(f"{OK} drive mounted under {mountpoint}")
+    print(f"drive mounted under {mountpoint}")
     return Path(mountpoint)
 
 
@@ -63,8 +63,9 @@ def checkout(token, destdir):
         "git", "checkout",
         "https://{token}@github.com/antonio-cavallo/sxope-bigq.git",
         str(destdir),
+        stdout=subprocess.PIPE
     ])
-    print(f"{OK} checked out sxope-bigq.git")
+    print("check out sxope-bigq.git")
     print(run.stdout)
 
 
@@ -139,5 +140,5 @@ def setup(
     add_pypath(destdir / "src")
 
     # moment of truth
-    from sxope_bigq.nb.utils import check_notebook
+    from bigq.nb.utils import check_notebook
     return check_notebook()
