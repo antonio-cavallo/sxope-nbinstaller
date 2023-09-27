@@ -63,9 +63,10 @@ def checkout(token, destdir):
         "git", "checkout",
         "https://{token}@github.com/antonio-cavallo/sxope-bigq.git",
         str(destdir),
-    ], stdout=subprocess.PIPE)
-    print("check out sxope-bigq.git")
-    print(run.stdout)
+    ], stdout=subprocess.PIPE, encoding="utf-8")
+    print(f"check out sxope-bigq.git in {destdir}")
+    if run.stdout:
+        print(run.stdout)
 
 
 @task("adding '{path}' to PYTHONPATH")
@@ -131,7 +132,9 @@ def setup(
     
     if mode == "dev-install":
         if destdir.exists():
-            print(f"{W} destdir {destdir} present, not checking out source code\n  (did you mean to use the mode='dev'?)")
+            print(f"""\
+{W} destdir {destdir} present, not checking out source code
+  (did you mean to use the mode='dev'?)""")
         else:
             token = getpass.getpass("Please provide the token for sxope-bigq: ")
             checkout(token, destdir)
