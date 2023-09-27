@@ -17,11 +17,14 @@ def task(msg):
         def _fn1(*args, **kwargs):
             print(f"{msg.format(**kwargs)} .. ", end="")
             try:
-                result = fn(*args, **kwargs)
+                with mock.patch("sys.stdout", new_callable=io.StringIO) as mck:
+                    result = fn(*args, **kwargs)
                 print("✅")
+                print(mck.getvalue())
                 return result
             except:
                 print("❌")
+                print(mck.getvalue())
                 raise
         return _fn1
     return _fn0
@@ -120,5 +123,5 @@ def install(
     
     if mode == "dev-install":
         token = getpass.getpass("Please provide the token for sxope-bigq: ")
-        checkout(token, Path(destdir))
+        checkout(token, Path(destdir.format(mountpoint=mountpoint)))
 
