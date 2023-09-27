@@ -71,23 +71,29 @@ def checkout(token, destdir):
         f"https://{token}@github.com/antonio-cavallo/sxope-bigq.git",
         destdir
     ]
-    cmd = [str(c) for c in cmd]
 
-    run = subprocess.run(cmd, stdout=subprocess.PIPE, encoding="utf-8")
-    if run.returncode != 0:
-        raise RuntimeError(f"""\
-failed to checkout code:
-  {' '.join(cmd)}
-Retcode: {run.returncode}
-""")
+    run = subprocess.check_output([str(c) for c in cmd], encoding="utf-8")
     print(f"check out sxope-bigq.git in {destdir}")
-    if run.stdout:
-        print(run.stdout)
+    if run.strip():
+        print(run)
 
 
 @task("adding '{path}' to PYTHONPATH")
 def add_pypath(path):
   sys.path.insert(0, str(path))
+
+
+@task("install bigq package")
+def install(ver=""):
+    cmd = [
+        "pip", "install",
+        "--force-reinstall",
+        f"git+https://{token}@github.com/antonio-cavallo/sxope-bigq{ver}"
+    ]
+    run = subprocess.check_output([str(c) for c in cmd], encoding="utf-8")
+    print(f"installed sxope-bigq package")
+    if run.strip():
+        print(run)
 
 
 def setup(
@@ -121,8 +127,10 @@ def setup(
     assert mode in { "prod", "dev-install", "dev" }
 
     if mode == "prod":
-        print("✅ not ready yet")
-        return
+        install()
+        from bigq.nb.utils import check_notebook
+        print("Verify system")
+        return check_notebook()
 
     if mode in { "dev", "dev-install" } and not (mountpoint and destdir):
         print(f'''\
