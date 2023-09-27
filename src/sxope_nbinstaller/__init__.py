@@ -60,7 +60,7 @@ def checkout(token, destdir):
         return
     
     cmd = [
-        "git", "checkout",
+        "git", "clone",
         f"https://{token}@github.com/antonio-cavallo/sxope-bigq.git",
         destdir
     ]
