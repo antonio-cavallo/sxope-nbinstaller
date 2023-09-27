@@ -52,6 +52,7 @@ def task(msg):
 
 @task("install bigq package (ref. {ref})")
 def install(token, ref=""):
+    ref = f"@{ref.lstrip('@')}" if ref else ""
     cmd = [
         "pip", "install",
         "--force-reinstall",
