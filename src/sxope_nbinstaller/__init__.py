@@ -7,20 +7,34 @@ import subprocess
 from pathlib import Path
 from unittest import mock
 
-W = "⚠️"
+W = "🟡"
 E = "❌"
 OK = "✅"
+
+
+def indent(txt: str, pre=" " * 2) -> str:
+    from textwrap import dedent
+
+    while txt and txt.startswith("\n"):
+        txt = txt[1:]
+    while txt and txt.endswith("\n"):
+        txt = txt[:-1]
+
+    txt = dedent(txt)
+    return "\n".join(f"{pre}{line}" for line in txt.split("\n"))
 
 
 def task(msg):
     def _fn0(fn):
         def _fn1(*args, **kwargs):
+            from inspect import getcallargs
+            kwargs = getcallargs(fn, *args, **kwargs)
             print(f"{msg.format(**kwargs)} .. ", end="")
             try:
                 with mock.patch("sys.stdout", new_callable=io.StringIO) as mck:
-                    result = fn(*args, **kwargs)
+                    result = fn(**kwargs)
                 print("✅")
-                print(mck.getvalue())
+                print(indent(mck.getvalue(), "|  "))
                 return result
             except:
                 print("❌")
@@ -30,15 +44,16 @@ def task(msg):
     return _fn0
 
 
-@task("mounting gdrive under {mountpoint} (readonly? {readonly})")
-def mount(mountpoint, readonly=True):
-  from google.colab import drive
-  with mock.patch('sys.stdout', new_callable=io.StringIO) as mck:
-    drive.mount(str(mountpoint), force_remount=True, readonly=readonly)
-  return Path(mountpoint)
+@task("mounting gdrive under '{mountpoint}' (readonly? {readonly})")
+def mount(mountpoint: Path, readonly: bool = True) -> Path:
+    from google.colab import drive
+    with mock.patch('sys.stdout', new_callable=io.StringIO) as mck:
+        drive.mount(str(mountpoint), force_remount=True, readonly=readonly)
+    print(f"{OK} drive mounted under {mountpoint}")
+    return Path(mountpoint)
 
 
-@task("checkout source code for sxope-bigq under {destdir}")
+@task("checkout source code for sxope-bigq in '{destdir}'")
 def checkout(token, destdir):
     if destdir.exists():
         print(f"{W} {destdir} is present, not checking out sxope-bigq")
@@ -49,7 +64,14 @@ def checkout(token, destdir):
         "https://{token}@github.com/antonio-cavallo/sxope-bigq.git",
         str(destdir),
     ])
+    print(f"{OK} checked out sxope-bigq.git")
     print(run.stdout)
+
+
+@task("adding '{path}' to PYTHONPATH")
+def add_pypath(path):
+  sys.path.insert(0, str(path))
+
 
 # @task("authorizing colab")
 # def auth():
@@ -58,25 +80,8 @@ def checkout(token, destdir):
 #   
 #   #from google.cloud import bigquery
 #   #client = bigquery.Client(project="pp-import-staging")
-# 
-# 
-# 
-# 
-# @task("setup bigq")
-# def setup(bigqdir):
-#   sys.path.insert(0, str(bigqdir / "src"))
-#   from bigq.nb.utils import check_notebook
-# 
-# 
-# def run(bigqdir, mountpoint=Path("/content/GDrive")):
-#   auth()
-#   mount(mountpoint)
-#   setup(mountpoint / "MyDrive/Projects/sxope-bigq")
-#   from bigq.nb.utils import check_notebook
-#   return check_notebook()
 
-
-def install(
+def setup(
     mode="dev",
     mountpoint=None,
     destdir=None,
@@ -118,10 +123,21 @@ def install(
 ''')
         return
 
+    mountpoint = Path(mountpoint)
+    destdir = Path(destdir)
+
     # mount the GDrive
     mount(mountpoint, readonly=True if mode == "dev" else False)
     
     if mode == "dev-install":
-        token = getpass.getpass("Please provide the token for sxope-bigq: ")
-        checkout(token, Path(destdir.format(mountpoint=mountpoint)))
+        if destdir.exists():
+            print(f"{W} destdir {destdir} present, not checking out source code\n  (did you mean to use the mode='dev'?)")
+        else:
+            token = getpass.getpass("Please provide the token for sxope-bigq: ")
+            checkout(token, Path(destdir.format(mountpoint=mountpoint)))
+    
+    add_pypath(destdir / "src")
 
+    # moment of truth
+    from sxope_bigq.nb.utils import check_notebook
+    return check_notebook()
