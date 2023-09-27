@@ -63,8 +63,7 @@ def checkout(token, destdir):
         "git", "checkout",
         "https://{token}@github.com/antonio-cavallo/sxope-bigq.git",
         str(destdir),
-        stdout=subprocess.PIPE
-    ])
+    ], stdout=subprocess.PIPE)
     print("check out sxope-bigq.git")
     print(run.stdout)
 
