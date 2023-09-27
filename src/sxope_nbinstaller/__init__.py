@@ -3,8 +3,13 @@ import sys
 import os
 import getpass
 
+import subprocess
 from pathlib import Path
 from unittest import mock
+
+W = "⚠️"
+E = "❌"
+OK = "✅"
 
 
 def task(msg):
@@ -29,6 +34,19 @@ def mount(mountpoint, readonly=True):
     drive.mount(str(mountpoint), force_remount=True, readonly=readonly)
   return Path(mountpoint)
 
+
+@task("checkout source code for sxope-bigq under {destdir}")
+def checkout(token, destdir):
+    if destdir.exists():
+        print(f"{W} {destdir} is present, not checking out sxope-bigq")
+        return
+    
+    run = subprocess.run([
+        "git", "checkout",
+        "https://{token}@github.com/antonio-cavallo/sxope-bigq.git",
+        str(destdir),
+    ])
+    print(run.stdout)
 
 # @task("authorizing colab")
 # def auth():
@@ -60,14 +78,36 @@ def install(
     mountpoint=None,
     destdir=None,
 ):
+    """setup the notebook
+
+    In prod mode it will install the sxope-bigq library.
+    In dev mode it will:
+        mount the user's GDrive under mount point (readonly)
+        set the PYTHONPATH to destdir / src
+
+    In dev-install it will:
+        mount the user's GDrive under mount point (writeable)
+        checkout sxope-bigq project under destdir
+        set the PYTHONPATH to destdir / src
+        
+    NOTE: dev-install is a useful one-off command, once the
+          source code id checked out under destdir you don't want
+          to re-run it.!
+
+    Examples:
+
+        sxope_nbinstaller.install("dev-install",
+            mountpoint="/content/GDrive",
+            destdir="{mountpoint}/MyDrive/Projects/sxope-bigq"
+        )
+    """
     assert mode in { "prod", "dev-install", "dev" }
 
-    #token = getpass.getpass("Give me a token! ")
     if mode == "prod":
         print("✅ not ready yet")
         return
 
-    if mode in { "dev", "dev-install" }:
+    if mode in { "dev", "dev-install" } and not (mountpoint and destdir):
         print(f'''\
 ❌ In dev mode you need the mountpoint/destdir args:
 
@@ -77,3 +117,8 @@ def install(
 
     # mount the GDrive
     mount(mountpoint, readonly=True if mode == "dev" else False)
+    
+    if mode == "dev-install":
+        token = getpass.getpass("Please provide the token for sxope-bigq: ")
+        checkout(token, Path(destdir))
+
