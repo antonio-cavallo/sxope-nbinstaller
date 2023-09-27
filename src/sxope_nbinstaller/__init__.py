@@ -84,7 +84,7 @@ def add_pypath(path):
 
 
 @task("install bigq package")
-def install(ver=""):
+def install(token):
     cmd = [
         "pip", "install",
         "--force-reinstall",
@@ -127,7 +127,8 @@ def setup(
     assert mode in { "prod", "dev-install", "dev" }
 
     if mode == "prod":
-        install()
+        token = getpass.getpass("Please provide the token for sxope-bigq: ")
+        install(token)
         from bigq.nb.utils import check_notebook
         print("Verify system")
         return check_notebook()
