@@ -53,8 +53,19 @@ def task(msg):
 #   return check_notebook()
 
 
-def install(mode="prod"):
-    assert mode in { "prod", "dev" }
-    getpass.getpass("Give me a token! ")
+def install(
+    mode="dev",
+    mountpoint=None,
+    destdir=None,
+):
+    assert mode in { "prod", "dev-install", "dev" }
 
+    #token = getpass.getpass("Give me a token! ")
+    if mode == "prod":
+        print("✅ not ready yet")
+        return
+
+    if mode in { "dev", "dev-install" }:
+        print(f'❌ In dev mode you need to call install("{mode}", mountpoint=..., destdir=...')
+        return
 
