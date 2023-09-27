@@ -34,11 +34,15 @@ def task(msg):
                 with mock.patch("sys.stdout", new_callable=io.StringIO) as mck:
                     result = fn(**kwargs)
                 print("✅")
-                print(indent(mck.getvalue(), "|  "))
+                out = mck.getvalue()
+                if out.strip():
+                    print(indent(out, "|  "))
                 return result
             except:
                 print("❌")
-                print(mck.getvalue())
+                out = mck.getvalue()
+                if out.strip():
+                    print(indent(out, "|  "))
                 raise
         return _fn1
     return _fn0
@@ -85,14 +89,6 @@ Retcode: {run.returncode}
 def add_pypath(path):
   sys.path.insert(0, str(path))
 
-
-# @task("authorizing colab")
-# def auth():
-#   from google.colab import auth
-#   auth.authenticate_user()  # to un-mount: drive.flush_and_unmount()
-#   
-#   #from google.cloud import bigquery
-#   #client = bigquery.Client(project="pp-import-staging")
 
 def setup(
     mode="dev",
@@ -147,10 +143,10 @@ def setup(
         if not destdir.exists():
             token = getpass.getpass("Please provide the token for sxope-bigq: ")
         checkout(token, destdir)
-    
 
     add_pypath(destdir / "src")
 
     # moment of truth
     from bigq.nb.utils import check_notebook
+    print("Verify system:")
     return check_notebook()
