@@ -123,8 +123,8 @@ def setup(
 ''')
         return
 
+    destdir = Path(destdir.format(mountpoint=mountpoint))
     mountpoint = Path(mountpoint)
-    destdir = Path(destdir)
 
     # mount the GDrive
     mount(mountpoint, readonly=True if mode == "dev" else False)
@@ -134,7 +134,7 @@ def setup(
             print(f"{W} destdir {destdir} present, not checking out source code\n  (did you mean to use the mode='dev'?)")
         else:
             token = getpass.getpass("Please provide the token for sxope-bigq: ")
-            checkout(token, Path(destdir.format(mountpoint=mountpoint)))
+            checkout(token, destdir)
     
     add_pypath(destdir / "src")
 
