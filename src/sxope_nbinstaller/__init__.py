@@ -131,7 +131,7 @@ def setup(
 
     if mode == "prod":
         token = getpass.getpass("Please provide the token for sxope-bigq: ")
-        install(token, "beta/0.0.0")
+        install(token, REF)
         from bigq.nb.utils import check_notebook
         return check_notebook()
 
