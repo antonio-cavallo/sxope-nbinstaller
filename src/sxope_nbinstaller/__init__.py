@@ -7,6 +7,8 @@ import subprocess
 from pathlib import Path
 from unittest import mock
 
+REF = "beta/0.0.0"  # bigq reference to install for prod
+
 W = "🟡"
 E = "❌"
 OK = "✅"
@@ -48,13 +50,17 @@ def task(msg):
     return _fn0
 
 
-@task("mounting gdrive under '{mountpoint}' (readonly? {readonly})")
-def mount(mountpoint: Path, readonly: bool = True) -> Path:
-    from google.colab import drive
-    with mock.patch('sys.stdout', new_callable=io.StringIO) as mck:
-        drive.mount(str(mountpoint), force_remount=True, readonly=readonly)
-    print(f"drive mounted under {mountpoint}")
-    return Path(mountpoint)
+@task("install bigq package (ref. {ref})")
+def install(token, ref=""):
+    cmd = [
+        "pip", "install",
+        "--force-reinstall",
+        f"git+https://{token}@github.com/antonio-cavallo/sxope-bigq{ref}"
+    ]
+    run = subprocess.check_output([str(c) for c in cmd], encoding="utf-8")
+    print(f"installed sxope-bigq package")
+    if run.strip():
+        print(run)
 
 
 @task("checkout source code for sxope-bigq in '{destdir}'")
@@ -78,22 +84,18 @@ def checkout(token, destdir):
         print(run)
 
 
+@task("mounting gdrive under '{mountpoint}' (readonly? {readonly})")
+def mount(mountpoint: Path, readonly: bool = True) -> Path:
+    from google.colab import drive
+    with mock.patch('sys.stdout', new_callable=io.StringIO) as mck:
+        drive.mount(str(mountpoint), force_remount=True, readonly=readonly)
+    print(f"drive mounted under {mountpoint}")
+    return Path(mountpoint)
+
+
 @task("adding '{path}' to PYTHONPATH")
 def add_pypath(path):
   sys.path.insert(0, str(path))
-
-
-@task("install bigq package")
-def install(token, ref=""):
-    cmd = [
-        "pip", "install",
-        "--force-reinstall",
-        f"git+https://{token}@github.com/antonio-cavallo/sxope-bigq{ref}"
-    ]
-    run = subprocess.check_output([str(c) for c in cmd], encoding="utf-8")
-    print(f"installed sxope-bigq package")
-    if run.strip():
-        print(run)
 
 
 def setup(
@@ -128,9 +130,8 @@ def setup(
 
     if mode == "prod":
         token = getpass.getpass("Please provide the token for sxope-bigq: ")
-        install(token)
+        install(token, "beta/0.0.0")
         from bigq.nb.utils import check_notebook
-        print("Verify system")
         return check_notebook()
 
     if mode in { "dev", "dev-install" } and not (mountpoint and destdir):
