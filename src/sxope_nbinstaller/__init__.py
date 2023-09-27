@@ -7,82 +7,10 @@ import subprocess
 from pathlib import Path
 from unittest import mock
 
+from .misc import task,  printerr, pip_install, git_clone
+
+URL = "https://github.com/antonio-cavallo/sxope-bigq.git"
 REF = "beta/0.0.0"  # bigq reference to install for prod
-
-W = "🟡"
-E = "❌"
-OK = "✅"
-
-
-def indent(txt: str, pre=" " * 2) -> str:
-    from textwrap import dedent
-
-    while txt and txt.startswith("\n"):
-        txt = txt[1:]
-    while txt and txt.endswith("\n"):
-        txt = txt[:-1]
-
-    txt = dedent(txt)
-    return "\n".join(f"{pre}{line}" for line in txt.split("\n"))
-
-
-def task(msg):
-    def _fn0(fn):
-        def _fn1(*args, **kwargs):
-            from inspect import getcallargs
-            kwargs = getcallargs(fn, *args, **kwargs)
-            print(f"{msg.format(**kwargs)} .. ", end="")
-            try:
-                with mock.patch("sys.stdout", new_callable=io.StringIO) as mck:
-                    result = fn(**kwargs)
-                print("✅")
-                out = mck.getvalue()
-                if out.strip():
-                    print(indent(out, "|  "))
-                return result
-            except:
-                print("❌")
-                out = mck.getvalue()
-                if out.strip():
-                    print(indent(out, "|  "))
-                raise
-        return _fn1
-    return _fn0
-
-
-@task("install bigq package (ref. {ref})")
-def install(token, ref=""):
-    ref = f"@{ref.lstrip('@')}" if ref else ""
-    cmd = [
-        "pip", "install",
-        "--force-reinstall",
-        f"git+https://{token}@github.com/antonio-cavallo/sxope-bigq{ref}"
-    ]
-    run = subprocess.check_output([str(c) for c in cmd], encoding="utf-8")
-    print(f"installed sxope-bigq package")
-    if run.strip():
-        print(run)
-
-
-@task("checkout source code for sxope-bigq in '{destdir}'")
-def checkout(token, destdir):
-    if destdir.exists():
-        print(f"""\
-{W} {destdir} is present, not checking out sxope-bigq
-  (did you mean to use the mode='dev'?)
-""")
-        return
-    
-    cmd = [
-        "git", "clone",
-        f"https://{token}@github.com/antonio-cavallo/sxope-bigq.git",
-        destdir
-    ]
-
-    run = subprocess.check_output([str(c) for c in cmd], encoding="utf-8")
-    print(f"check out sxope-bigq.git in {destdir}")
-    if run.strip():
-        print(run)
 
 
 @task("mounting gdrive under '{mountpoint}' (readonly? {readonly})")
@@ -131,19 +59,19 @@ def setup(
 
     if mode == "prod":
         token = getpass.getpass("Please provide the token for sxope-bigq: ")
-        install(token, REF)
+        pip_install(URL, token=token, ref=REF)
         from bigq.nb.utils import check_notebook
         return check_notebook()
 
     if mode in { "dev", "dev-install" } and not (mountpoint and destdir):
-        print(f'''\
-❌ In dev mode you need the mountpoint/destdir args:
-
+        printerr(f"""\
+In dev mode you need the mountpoint/destdir args
+Try:
     sxope_nbinstaller.install("{mode}", mountpoint=..., destdir=...)
-''')
+""", multiline=True)
         return
 
-    destdir = Path(destdir.format(mountpoint=mountpoint))
+    destdir = Path(destdir.format(mountpoint=mountpoint)).absolute()
     mountpoint = Path(mountpoint)
 
     # mount the GDrive
@@ -153,7 +81,7 @@ def setup(
         token = None
         if not destdir.exists():
             token = getpass.getpass("Please provide the token for sxope-bigq: ")
-        checkout(token, destdir)
+        git_clone(destdir, url=URL, token=token)
 
     add_pypath(destdir / "src")
 
