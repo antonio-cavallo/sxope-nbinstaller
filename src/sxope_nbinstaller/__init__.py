@@ -75,4 +75,5 @@ def install(
 ''')
         return
 
+    # mount the GDrive
     mount(mountpoint, readonly=True if mode == "dev" else False)
