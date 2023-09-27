@@ -59,13 +59,18 @@ def checkout(token, destdir):
         print(f"{W} {destdir} is present, not checking out sxope-bigq")
         return
     
-    run = subprocess.run([
+    cmd = [
         "git", "checkout",
         f"https://{token}@github.com/antonio-cavallo/sxope-bigq.git",
-        str(destdir),
-    ], stdout=subprocess.PIPE, encoding="utf-8")
+        destdir
+    ]
+    run = subprocess.run([str(c) for c in cmd], stdout=subprocess.PIPE, encoding="utf-8")
     if run.returncode != 0:
-        raise RuntimeError("failed to checkout code")
+        raise RuntimeError(f"""\
+failed to checkout code:
+  {' '.join(cmd)}
+Retcode: {run.returncode}
+""")
     print(f"check out sxope-bigq.git in {destdir}")
     if run.stdout:
         print(run.stdout)
