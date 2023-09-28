@@ -89,7 +89,7 @@ def setup(
     mount(mountpoint, readonly=True if mode == "dev" else False)
 
     token = None
-    for name in (projects or []):
+    for name in (projects or list(PROJECTS)[:1]):
         project = PROJECTS[name]
 
         if mode == "dev-install" and token is None:
