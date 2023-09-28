@@ -1,13 +1,11 @@
 import io
 import sys
-import os
 import getpass
 
-import subprocess
 from pathlib import Path
 from unittest import mock
 
-from .misc import task,  printerr, pip_install, git_clone
+from .misc import task, pip_install, git_clone, printok
 
 
 PROJECTS = {
@@ -22,7 +20,8 @@ PROJECTS = {
 @task("mounting gdrive under '{mountpoint}' (readonly? {readonly})")
 def mount(mountpoint: Path, readonly: bool = True) -> Path:
     from google.colab import drive
-    with mock.patch('sys.stdout', new_callable=io.StringIO) as mck:
+
+    with mock.patch("sys.stdout", new_callable=io.StringIO):
         drive.mount(str(mountpoint), force_remount=True, readonly=readonly)
     print(f"drive mounted under {mountpoint}")
     return Path(mountpoint)
@@ -30,7 +29,7 @@ def mount(mountpoint: Path, readonly: bool = True) -> Path:
 
 @task("adding '{path}' to PYTHONPATH")
 def add_pypath(path):
-  sys.path.insert(0, str(path))
+    sys.path.insert(0, str(path))
 
 
 def setup(
@@ -50,7 +49,7 @@ def setup(
         mount the user's GDrive under mount point (writeable)
         checkout sxope-bigq project under destdir
         set the PYTHONPATH to destdir / src
-        
+
     NOTE: dev-install is a useful one-off command, once the
           source code id checked out under destdir you don't want
           to re-run it.!
@@ -63,22 +62,24 @@ def setup(
             projects=["bigq",]
         )
     """
-    assert mode in { "prod", "dev-install", "dev" }
+    assert mode in {"prod", "dev-install", "dev"}
 
     def pathresolver(path):
         return Path(
-            str(path)
-            .format(mountpoint=mountpoint, projectsdir=projectsdir)
+            str(path).format(mountpoint=mountpoint, projectsdir=projectsdir)
         ).absolute()
-    
-    projects = projects or list(PROJECTS)[:1])
-    printok(f"""\
+
+    projects = projects or list(PROJECTS)[:1]
+    printok(
+        f"""\
 setting up [{mode}]
 Settings:
   projectsdir : {projectsdir}
   mounted     : {mountpoint}
   projects    : {', '.join(projects)}
-""", multiline-True)
+""",
+        multiline=True,
+    )
 
     if mode == "prod":
         token = None
@@ -87,10 +88,11 @@ Settings:
             if not project.get("prod"):
                 continue
             if token is None:
-                token = getpass.getpass(f"Please provide an access token: ")
+                token = getpass.getpass("Please provide an access token: ")
             pip_install(project["url"], token=token, ref=project["prod"])
 
         from bigq.nb.utils import check_notebook
+
         return check_notebook()
 
     # mount the GDrive
@@ -98,7 +100,7 @@ Settings:
     mount(mountpoint, readonly=True if mode == "dev" else False)
 
     token = None
-    for name in (projects or list(PROJECTS)[:1]):
+    for name in projects:
         project = PROJECTS[name]
 
         if mode == "dev-install" and token is None:
@@ -112,5 +114,6 @@ Settings:
 
     # moment of truth
     from bigq.nb.utils import check_notebook
+
     print("Verify system:")
     return check_notebook()
