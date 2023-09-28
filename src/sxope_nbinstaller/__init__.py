@@ -70,6 +70,15 @@ def setup(
             str(path)
             .format(mountpoint=mountpoint, projectsdir=projectsdir)
         ).absolute()
+    
+    projects = projects or list(PROJECTS)[:1])
+    printok(f"""\
+setting up [{mode}]
+Settings:
+  projectsdir : {projectsdir}
+  mounted     : {mountpoint}
+  projects    : {', '.join(projects)}
+""", multiline-True)
 
     if mode == "prod":
         token = None
