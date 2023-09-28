@@ -70,6 +70,8 @@ def setup(
         ).absolute()
 
     projects = projects or list(PROJECTS)[:1]
+    projectsdir = pathresolver(projectsdir)
+
     printok(
         f"""\
 setting up [{mode}]
