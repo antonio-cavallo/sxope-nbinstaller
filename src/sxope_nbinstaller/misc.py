@@ -72,7 +72,7 @@ def _fixurl(url, token="", ref=""):
     return o
 
 
-@task("install package package (ref. {url})")
+@task("install package package from {url} (ref. {ref})")
 def pip_install(url, token="", ref="", test=False): 
     o = _fixurl(url, token, ref)
     scheme = o.scheme
