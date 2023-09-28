@@ -76,6 +76,7 @@ Try:
 
     # mount the GDrive
     mount(mountpoint, readonly=True if mode == "dev" else False)
+    return
     
     if mode == "dev-install":
         token = None
