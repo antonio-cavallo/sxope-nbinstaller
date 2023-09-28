@@ -67,7 +67,7 @@ def setup(
 
     if mode == "prod":
         token = None
-        for name in (projects or []):
+        for name in PROJECTS:
             project = PROJECTS[name]
             if not project.get("prod"):
                 continue
