@@ -9,13 +9,11 @@ from unittest import mock
 
 from .misc import task,  printerr, pip_install, git_clone
 
-URL = "https://github.com/antonio-cavallo/sxope-bigq.git"
-REF = "beta/0.0.0"  # bigq reference to install for prod
 
 PROJECTS = {
     "bigq": {
         "url": "https://github.com/antonio-cavallo/sxope-bigq.git",
-        "destdir": "{mountpoint}/Projects/sxope-bigq",
+        "destdir": "{projectsdir}/sxope-bigq",
         "prod": "beta/0.0.0",
     },
 }
@@ -37,7 +35,8 @@ def add_pypath(path):
 
 def setup(
     mode="dev",
-    mountpoint=None,
+    mountpoint="/content/GDrive",
+    projectsdir="{mountpoint}/MyDrive/Projects",
     projects=None,
 ):
     """setup the notebook
@@ -60,10 +59,17 @@ def setup(
 
         sxope_nbinstaller.install("dev-install",
             mountpoint="/content/GDrive",
-            destdir="{mountpoint}/MyDrive/Projects/sxope-bigq"
+            destdir="{mountpoint}/MyDrive/Projects",
+            projects=["bigq",]
         )
     """
     assert mode in { "prod", "dev-install", "dev" }
+
+    def pathresolver(path):
+        return Path(
+            str(path)
+            .format(mountpoint=mountpoint, projectsdir=projectsdir)
+        ).absolute()
 
     if mode == "prod":
         token = None
@@ -78,14 +84,6 @@ def setup(
         from bigq.nb.utils import check_notebook
         return check_notebook()
 
-    if mode in { "dev", "dev-install" } and not (mountpoint and destdir):
-        printerr(f"""\
-In dev mode you need the mountpoint/destdir args
-Try:
-    sxope_nbinstaller.install("{mode}", mountpoint=..., destdir=...)
-""", multiline=True)
-        return
-
     # mount the GDrive
     mountpoint = Path(mountpoint)
     mount(mountpoint, readonly=True if mode == "dev" else False)
@@ -97,11 +95,11 @@ Try:
         if mode == "dev-install" and token is None:
             token = getpass.getpass(f"Please provide the token for [{name}]: ")
 
-        destdir = Path(project["destdir"].format(mountpoint=mountpoint)).absolute()
+        dst = pathresolver(project["destdir"])
         if mode == "dev-install":
-            git_clone(destdir, url=project["url"], token=token)
+            git_clone(dst, url=project["url"], token=token)
 
-        add_pypath(destdir / "src")
+        add_pypath(dst / "src")
 
     # moment of truth
     from bigq.nb.utils import check_notebook
