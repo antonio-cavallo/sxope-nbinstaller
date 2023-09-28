@@ -12,6 +12,14 @@ from .misc import task,  printerr, pip_install, git_clone
 URL = "https://github.com/antonio-cavallo/sxope-bigq.git"
 REF = "beta/0.0.0"  # bigq reference to install for prod
 
+PROJECTS = {
+    "bigq": {
+        "url": "https://github.com/antonio-cavallo/sxope-bigq.git",
+        "destdir": "{mountpoint}/Projects/sxope-bigq",
+        "prod": "beta/0.0.0",
+    },
+}
+
 
 @task("mounting gdrive under '{mountpoint}' (readonly? {readonly})")
 def mount(mountpoint: Path, readonly: bool = True) -> Path:
@@ -30,7 +38,7 @@ def add_pypath(path):
 def setup(
     mode="dev",
     mountpoint=None,
-    destdir=None,
+    projects=None,
 ):
     """setup the notebook
 
@@ -58,8 +66,15 @@ def setup(
     assert mode in { "prod", "dev-install", "dev" }
 
     if mode == "prod":
-        token = getpass.getpass("Please provide the token for sxope-bigq: ")
-        pip_install(URL, token=token, ref=REF)
+        token = None
+        for name in (projects or []):
+            project = PROJECTS[name]
+            if not project.get("prod"):
+                continue
+            if token is None:
+                token = getpass.getpass(f"Please provide an access token: ")
+            pip_install(project["url"], token=token, ref=project["prod"])
+
         from bigq.nb.utils import check_notebook
         return check_notebook()
 
@@ -71,20 +86,22 @@ Try:
 """, multiline=True)
         return
 
-    destdir = Path(destdir.format(mountpoint=mountpoint)).absolute()
-    mountpoint = Path(mountpoint)
-
     # mount the GDrive
+    mountpoint = Path(mountpoint)
     mount(mountpoint, readonly=True if mode == "dev" else False)
-    return
-    
-    if mode == "dev-install":
-        token = None
-        if not destdir.exists():
-            token = getpass.getpass("Please provide the token for sxope-bigq: ")
-        git_clone(destdir, url=URL, token=token)
 
-    add_pypath(destdir / "src")
+    token = None
+    for name in (projects or []):
+        project = PROJECTS[name]
+
+        if mode == "dev-install" and token is None:
+            token = getpass.getpass(f"Please provide the token for [{name}]: ")
+
+        destdir = Path(project["destdir"].format(mountpoint=mountpoint)).absolute()
+        if mode == "dev-install":
+            git_clone(destdir, url=project["url"], token=token)
+
+        add_pypath(destdir / "src")
 
     # moment of truth
     from bigq.nb.utils import check_notebook
