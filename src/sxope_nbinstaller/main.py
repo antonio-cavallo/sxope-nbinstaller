@@ -109,6 +109,8 @@ def setup(
                 token = getpass.getpass("Please provide an access token: ")
             pip_install(project["url"], token=token, ref=project["prod"])
 
+        if writeable:
+            mount(mountpoint, readonly=not writeable)
         from bigq.nb.utils import check_notebook
 
         return check_notebook()
