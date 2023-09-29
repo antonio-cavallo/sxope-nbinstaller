@@ -10,7 +10,7 @@ PROJECTS = {
     "bigq": {
         "url": "https://github.com/antonio-cavallo/sxope-bigq.git",
         "destdir": "{projectsdir}/sxope-bigq",
-        "prod": "f26124adbf8eae9a690820722b1c8b015508f7ea",
+        "prod": "1e3d05c0b4df50299a459cd822349cce03f4de22",
     },
 }
 
