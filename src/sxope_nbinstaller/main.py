@@ -32,7 +32,9 @@ def report(mode, mountpoint, projectsdir, projects, readonly, pre=" " * 2):
         f"setting up [{mode}]",
     ]
     lines.append("Config")
-    lines.append(f"{pre}mountpoint  : {mountpoint}")
+    lines.append(
+        f"{pre}mountpoint  : {mountpoint} (readonly? {'yes' if readonly else 'no'})"
+    )
     lines.append(f"{pre}projectsdir : {projectsdir}")
     lines.append(f"{pre}projects    : {', '.join(projects)}")
     lines.append(f"{pre}")
@@ -111,7 +113,7 @@ def setup(
 
     # mount the GDrive
     mountpoint = Path(mountpoint)
-    mount(mountpoint, readonly=True if mode == "dev" else False)
+    mount(mountpoint, readonly=readonly)
 
     token = None
     for name in projects:
