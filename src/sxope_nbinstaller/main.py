@@ -15,7 +15,7 @@ PROJECTS = {
 }
 
 
-def report(mode, mountpoint, projectsdir, projects, readonly, pre=" " * 2):
+def report(mode, mountpoint, projectsdir, projects, writeable, pre=" " * 2):
     def pathresolver(path):
         if not path:
             return
@@ -23,22 +23,26 @@ def report(mode, mountpoint, projectsdir, projects, readonly, pre=" " * 2):
             str(path).format(mountpoint=mountpoint, projectsdir=projectsdir)
         ).absolute()
 
+    projectsdir = pathresolver(projectsdir)
+
     lines = [
         f"setting up [{mode}]",
     ]
     lines.append("Config")
     lines.append(
-        f"{pre}mountpoint  : {mountpoint} (readonly? {'yes' if readonly else 'no'})"
+        f"{pre}mountpoint  : {mountpoint} (writeable? {'yes' if writeable else 'no'})"
     )
     lines.append(f"{pre}projectsdir : {projectsdir}")
     lines.append(f"{pre}projects    : {', '.join(projects)}")
-    lines.append(f"{pre}")
+    lines.append("")
     lines.append("Projects list")
     for name in (*projects, *[p for p in PROJECTS if p not in projects]):
         project = PROJECTS[name]
         destdir = pathresolver(project.get("destdir", ""))
-        active = "+" if destdir and destdir.exists() else "."
-        lines.append(f"{pre}{active} {project}: {destdir}")
+        "+" if destdir and destdir.exists() else "."
+        lines.append(f"{pre}. {name}")
+        if mode != "prod":
+            lines.append(f"{pre}  destdir {destdir}")
         lines.append(f"{pre}  (from {project.get('url')})")
     return lines
 
@@ -48,14 +52,14 @@ def setup(
     mountpoint="/content/GDrive",
     projectsdir="{mountpoint}/MyDrive/Projects",
     projects=None,
-    readonly=None,
+    writeable=None,
 ):
     """setup the notebook
 
     In 'prod' mode it will install the sxope-bigq library.
 
     In 'dev' mode it will:
-        mount the user's GDrive under mountpoint (readonly unless setto False)
+        mount the user's GDrive under mountpoint (writeable unless setto False)
         set the PYTHONPATH to destdir / src
 
     In dev-install it will:
@@ -84,13 +88,14 @@ def setup(
             str(path).format(mountpoint=mountpoint, projectsdir=projectsdir)
         ).absolute()
 
+    mountpoint = Path(mountpoint).absolute()
     projectsdir = pathresolver(projectsdir)
     projects = projects or list(PROJECTS)[:1]
-    readonly = (
-        (True if mode in {"dev", "prod"} else False) if readonly is None else readonly
+    writeable = (
+        (True if mode in {"dev-install"} else False) if writeable is None else writeable
     )
     printok(
-        "\n".join(report(mode, mountpoint, projectsdir, projects, readonly)),
+        "\n".join(report(mode, mountpoint, projectsdir, projects, writeable)),
         multiline=True,
     )
 
@@ -109,8 +114,7 @@ def setup(
         return check_notebook()
 
     # mount the GDrive
-    mountpoint = Path(mountpoint)
-    mount(mountpoint, readonly=readonly)
+    mount(mountpoint, readonly=not writeable)
 
     token = None
     for name in projects:
