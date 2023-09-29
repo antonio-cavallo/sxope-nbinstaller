@@ -10,7 +10,7 @@ PROJECTS = {
     "bigq": {
         "url": "https://github.com/antonio-cavallo/sxope-bigq.git",
         "destdir": "{projectsdir}/sxope-bigq",
-        "prod": "beta/0.0.0",
+        "prod": "9d56f0c1ce57bd9925764f6509180c4208be99a5",
     },
     "installer": {
         "url": "https://github.com/antonio-cavallo/sxope-nbinstaller.git",
