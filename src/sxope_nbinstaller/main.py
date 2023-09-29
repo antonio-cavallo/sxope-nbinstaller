@@ -3,7 +3,7 @@ import getpass
 from pathlib import Path
 
 from .misc import printok
-from .task import pip_install, git_clone, mount, add_pypath
+from .tasks import pip_install, git_clone, mount, add_pypath
 
 
 PROJECTS = {
