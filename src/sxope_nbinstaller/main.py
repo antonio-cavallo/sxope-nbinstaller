@@ -12,11 +12,6 @@ PROJECTS = {
         "destdir": "{projectsdir}/sxope-bigq",
         "prod": "f26124adbf8eae9a690820722b1c8b015508f7ea",
     },
-    "installer": {
-        "url": "https://github.com/antonio-cavallo/sxope-nbinstaller.git",
-        "destdir": "{projectsdir}/sxope-nbinstaller",
-        "prod": "beta/0.0.1",
-    },
 }
 
 
@@ -39,10 +34,12 @@ def report(mode, mountpoint, projectsdir, projects, readonly, pre=" " * 2):
     lines.append(f"{pre}projects    : {', '.join(projects)}")
     lines.append(f"{pre}")
     lines.append("Projects list")
-    for project in (*projects, *[p for p in PROJECTS if p not in projects]):
-        destdir = pathresolver(PROJECTS[project].get("destdir", ""))
+    for name in (*projects, *[p for p in PROJECTS if p not in projects]):
+        project = PROJECTS[name]
+        destdir = pathresolver(project.get("destdir", ""))
         active = "+" if destdir and destdir.exists() else "."
         lines.append(f"{pre}{active} {project}: {destdir}")
+        lines.append(f"{pre}  (from {project.get('url')})")
     return lines
 
 
