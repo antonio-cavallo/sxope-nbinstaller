@@ -53,6 +53,7 @@ def setup(
     projectsdir="{mountpoint}/MyDrive/Projects",
     projects=None,
     writeable=None,
+    dry=False,
 ):
     """setup the notebook
 
@@ -107,10 +108,13 @@ def setup(
                 continue
             if token is None:
                 token = getpass.getpass("Please provide an access token: ")
-            pip_install(project["url"], token=token, ref=project["prod"])
+
+            if not dry:
+                pip_install(project["url"], token=token, ref=project["prod"])
 
         if writeable:
-            mount(mountpoint, readonly=not writeable)
+            if not dry:
+                mount(mountpoint, readonly=not writeable)
         from bigq.nb.utils import check_notebook
 
         return check_notebook()
