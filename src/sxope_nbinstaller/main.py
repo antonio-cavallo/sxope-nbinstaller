@@ -2,7 +2,7 @@ import getpass
 
 from pathlib import Path
 
-from .misc import printok
+from .misc import printok, printtask
 from .tasks import pip_install, git_clone, mount, add_pypath
 
 
@@ -109,10 +109,12 @@ def setup(
             if token is None:
                 token = getpass.getpass("Please provide an access token: ")
 
+            printtask(f"installing {project['url']} (ref. {project['prod']})")
             if not dry:
                 pip_install(project["url"], token=token, ref=project["prod"])
 
         if writeable:
+            printtask(f"mounting GDrive under {mountpoint}")
             if not dry:
                 mount(mountpoint, readonly=not writeable)
         from bigq.nb.utils import check_notebook

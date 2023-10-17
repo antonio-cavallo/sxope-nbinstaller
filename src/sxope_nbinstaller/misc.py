@@ -6,6 +6,7 @@ import functools
 OK = "✅"
 E = "❌"
 W = "🟡"
+RA = "👉"
 
 
 def indent(txt: str, pre=" " * 2) -> str:
@@ -32,6 +33,7 @@ def printx(msg, multiline=False, tag=OK):
 printok = functools.partial(printx, tag=OK)
 printerr = functools.partial(printx, tag=E)
 printwarn = functools.partial(printx, tag=W)
+printtask = functools.partial(printx, tag=RA)
 
 
 def task(msg):
