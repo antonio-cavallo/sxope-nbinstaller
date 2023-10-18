@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 # from .tasks import pip_install, git_clone, mount, add_pypath
-from . import tasks
+from . import tasks, misc
 
 
 PROJECTS = {
@@ -74,10 +74,8 @@ def setup(
         (True if mode in {"dev-install"} else False) if writeable is None else writeable
     )
 
-    if dryrun:
-        from . import misc
+    misc.set_runmode(misc.RunMode.DRYRUN if dryrun else None)
 
-        misc.RUNMODE = misc.RunMode.DRYRUN
     tasks.report(mode, mountpoint, projectsdir, projects, PROJECTS, writeable)
 
     # mount the GDrive
