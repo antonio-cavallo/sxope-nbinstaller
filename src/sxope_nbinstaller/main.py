@@ -1,5 +1,5 @@
 import getpass
-
+import contextlib
 from pathlib import Path
 
 
@@ -93,9 +93,11 @@ def setup(
                 token = getpass.getpass("Please provide an access token: ")
             tasks.pip_install(project["url"], token=token, ref=project["prod"])
 
-        from bigq.nb.utils import check_notebook
+        with contextlib.suppress(ModuleNotFoundError):
+            from bigq.nb.utils import check_notebook
 
-        return check_notebook()
+            return check_notebook()
+        return "bigq not installed"
 
     # TODO
     return
