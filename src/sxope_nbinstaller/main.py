@@ -2,49 +2,25 @@ import getpass
 
 from pathlib import Path
 
-from .misc import printok, printtask
-from .tasks import pip_install, git_clone, mount, add_pypath
+
+# from .tasks import pip_install, git_clone, mount, add_pypath
+from . import tasks
 
 
 PROJECTS = {
     "bigq": {
         "url": "https://github.com/antonio-cavallo/sxope-bigq.git",
-        "destdir": "{projectsdir}/sxope-bigq",
         "prod": "1e3d05c0b4df50299a459cd822349cce03f4de22",
+        "destdir": "{projectsdir}/sxope-bigq",
+        "pypath": "src",
     },
+    # "alphalens": {
+    #    "url": "https://github.com/antonio-cavallo/alphalens.git",
+    #    "destdir": "{projectsdir}/alphalens",
+    #    "path": "",
+    #    "branch": "ng",
+    # },
 }
-
-
-def report(mode, mountpoint, projectsdir, projects, writeable, pre=" " * 2):
-    def pathresolver(path):
-        if not path:
-            return
-        return Path(
-            str(path).format(mountpoint=mountpoint, projectsdir=projectsdir)
-        ).absolute()
-
-    projectsdir = pathresolver(projectsdir)
-
-    lines = [
-        f"setting up [{mode}]",
-    ]
-    lines.append("Config")
-    lines.append(
-        f"{pre}mountpoint  : {mountpoint} (writeable? {'yes' if writeable else 'no'})"
-    )
-    lines.append(f"{pre}projectsdir : {projectsdir}")
-    lines.append(f"{pre}projects    : {', '.join(projects)}")
-    lines.append("")
-    lines.append("Projects list")
-    for name in (*projects, *[p for p in PROJECTS if p not in projects]):
-        project = PROJECTS[name]
-        destdir = pathresolver(project.get("destdir", ""))
-        "+" if destdir and destdir.exists() else "."
-        lines.append(f"{pre}. {name}")
-        if mode != "prod":
-            lines.append(f"{pre}  destdir {destdir}")
-        lines.append(f"{pre}  (from {project.get('url')})")
-    return lines
 
 
 def setup(
@@ -53,7 +29,7 @@ def setup(
     projectsdir="{mountpoint}/MyDrive/Projects",
     projects=None,
     writeable=None,
-    dry=False,
+    dryrun=False,
 ):
     """setup the notebook
 
@@ -91,14 +67,21 @@ def setup(
 
     mountpoint = Path(mountpoint).absolute()
     projectsdir = pathresolver(projectsdir)
-    projects = projects or list(PROJECTS)[:1]
+    projects = ([projects] if isinstance(projects, str) else projects) or list(
+        PROJECTS
+    )[:1]
     writeable = (
         (True if mode in {"dev-install"} else False) if writeable is None else writeable
     )
-    printok(
-        "\n".join(report(mode, mountpoint, projectsdir, projects, writeable)),
-        multiline=True,
-    )
+
+    if dryrun:
+        from . import misc
+
+        misc.RUNMODE = misc.RunMode.DRYRUN
+    tasks.report(mode, mountpoint, projectsdir, projects, PROJECTS, writeable)
+
+    # mount the GDrive
+    tasks.mount(mountpoint, readonly=not writeable)
 
     if mode == "prod":
         token = None
@@ -106,23 +89,16 @@ def setup(
             project = PROJECTS[name]
             if not project.get("prod"):
                 continue
-            if token is None:
+            if token is None and not dryrun:
                 token = getpass.getpass("Please provide an access token: ")
+            tasks.pip_install(project["url"], token=token, ref=project["prod"])
 
-            printtask(f"installing {project['url']} (ref. {project['prod']})")
-            if not dry:
-                pip_install(project["url"], token=token, ref=project["prod"])
-
-        if writeable:
-            printtask(f"mounting GDrive under {mountpoint}")
-            if not dry:
-                mount(mountpoint, readonly=not writeable)
         from bigq.nb.utils import check_notebook
 
         return check_notebook()
 
-    # mount the GDrive
-    mount(mountpoint, readonly=not writeable)
+    # TODO
+    return
 
     token = None
     for name in projects:
@@ -133,12 +109,18 @@ def setup(
 
         dst = pathresolver(project["destdir"])
         if mode == "dev-install":
-            git_clone(dst, url=project["url"], token=token)
+            tasks.git_clone(dst, url=project["url"], token=token)
 
-        add_pypath(dst / "src")
+        tasks.add_pypath(dst / "src")
 
     # moment of truth
     from bigq.nb.utils import check_notebook
 
     print("Verify system:")
     return check_notebook()
+
+
+if __name__ == "__main__":
+    setup("prod", dryrun=True)
+    # setup("dev", dryrun=True)
+    # setup("dev-install", dryrun=True)
