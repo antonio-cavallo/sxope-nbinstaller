@@ -20,6 +20,14 @@ class RunMode(enum.Flag):
 RUNMODE = RunMode.ABORT
 
 
+def set_runmode(mode):
+    global RUNMODE
+    if mode is None:
+        RUNMODE = RunMode.ABORT
+    else:
+        RUNMODE = mode
+
+
 def indent(txt: str, pre=" " * 2) -> str:
     from textwrap import dedent
 
