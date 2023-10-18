@@ -1,4 +1,6 @@
 import io
+import enum
+import traceback
 from unittest import mock
 import functools
 
@@ -6,7 +8,16 @@ import functools
 OK = "✅"
 E = "❌"
 W = "🟡"
-RA = "👉"
+RH = "👉"
+
+
+class RunMode(enum.Flag):
+    DRYRUN = enum.auto()
+    ABORT = enum.auto()
+    NOABORT = enum.auto()
+
+
+RUNMODE = RunMode.ABORT
 
 
 def indent(txt: str, pre=" " * 2) -> str:
@@ -21,11 +32,11 @@ def indent(txt: str, pre=" " * 2) -> str:
     return "\n".join(f"{pre}{line}" for line in txt.split("\n"))
 
 
-def printx(msg, multiline=False, tag=OK):
+def printx(msg, multiline=False, tag=OK, offset=" " * 2):
     if multiline:
         head, _, body = msg.partition("\n")
         print(f"{tag} {head}")
-        print(indent(body, " " * len(tag) + " "))
+        print(indent(body, " " * len(tag) + offset))
     else:
         print(f"{tag} {msg}")
 
@@ -33,33 +44,43 @@ def printx(msg, multiline=False, tag=OK):
 printok = functools.partial(printx, tag=OK)
 printerr = functools.partial(printx, tag=E)
 printwarn = functools.partial(printx, tag=W)
-printtask = functools.partial(printx, tag=RA)
+printtask = functools.partial(printx, tag=RH)
 
 
-def task(msg):
+def task(msg, anyway=None):
     def _fn0(fn):
         def _fn1(*args, **kwargs):
             from inspect import getcallargs
 
-            kwargs = getcallargs(fn, *args, **kwargs)
-            print(f"{msg.format(**kwargs)} .. ", end="")
-            try:
-                out = ""
-                with mock.patch("sys.stdout", new_callable=io.StringIO) as mck:
-                    try:
-                        result = fn(**kwargs)
-                    finally:
-                        out = mck.getvalue()
-                print(OK)
-                if out.strip():
-                    print(indent(out, "|  "))
-                return result
-            except:
-                print(E)
-                if out.strip():
-                    print(indent(out, "|  "))
-                raise
+            runmode = RUNMODE
+            if args and isinstance(args[0], RunMode):
+                runmode, args = args[0], args[1:]
 
+            kwargs = getcallargs(fn, *args, **kwargs)
+            print(f"{RH} {msg.format(**kwargs)} .. ", end="")
+            lead = "   | "
+            if (runmode & RunMode.DRYRUN) and not anyway:
+                print(OK)
+                print(indent(f"(dry-run) {fn.__name__}(**{kwargs})", lead))
+                return
+
+            try:
+                with mock.patch("sys.stdout", new_callable=io.StringIO) as mck:
+                    result = fn(**kwargs)
+                print(OK)
+                if (out := mck.getvalue()).strip():
+                    print(indent(out, lead))
+                return result
+            except:  # noqa: E722
+                print(E)
+                out = mck.getvalue()
+                out += traceback.format_exc()
+                if out.strip():
+                    print(indent(out, lead))
+                if runmode and runmode & RunMode.ABORT:
+                    raise
+
+        _fn1.fn = fn
         return _fn1
 
     return _fn0
