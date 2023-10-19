@@ -2,26 +2,26 @@ import getpass
 import contextlib
 from pathlib import Path
 
-
-# from .tasks import pip_install, git_clone, mount, add_pypath
 from . import tasks, misc
 
 
 PROJECTS = {
     "bigq": {
         "url": "https://github.com/antonio-cavallo/sxope-bigq.git",
-        "prod": "1e3d05c0b4df50299a459cd822349cce03f4de22",
+        "prod": "1e3d05c0b4df50299a459cd822349cce03f4de22",  # check out this in prod
         "ask-token": True,
-        "dev": "",
+        "dev": "",  # check out this in dev-install
         "destdir": "{projectsdir}/sxope-bigq",
         "pypath": "src",
     },
-    # "alphalens": {
-    #    "url": "https://github.com/antonio-cavallo/alphalens.git",
-    #    "destdir": "{projectsdir}/alphalens",
-    #    "path": "",
-    #    "branch": "ng",
-    # },
+    "alphalens": {
+        "url": "https://github.com/antonio-cavallo/alphalens.git",
+        "prod": "ng",
+        "ask-token": False,
+        "dev": "ng",  # check out this in dev-install
+        "destdir": "{projectsdir}/alphalens",
+        "pypath": "",
+    },
 }
 
 
@@ -92,12 +92,21 @@ def setup(
             if project.get("ask-token") and not dryrun:
                 token = getpass.getpass("Please provide an access token: ")
             tasks.pip_install(project["url"], token=token, ref=project["prod"])
-        elif mode == "dev":
+        elif mode in {"dev", "dev-install"}:
             destdir = project.get("destdir")
             destdir = projectsdir / destdir.format(
                 **{"projectsdir": projectsdir, **project}
             )
             pypath = destdir / project.get("pypath", "")
+
+            if mode == "dev-install":
+                token = None
+                if project.get("ask-token") and not dryrun:
+                    token = getpass.getpass("Please provide an access token: ")
+                tasks.git_clone(
+                    destdir, url=project["url"], token=token, branch=project.get("dev")
+                )
+
             tasks.add_pypath(pypath)
 
     with contextlib.suppress(ModuleNotFoundError):
@@ -106,46 +115,47 @@ def setup(
         return check_notebook()
     return "bigq not installed"
 
-    if mode == "prod":
-        token = None
-        for name in PROJECTS:
-            project = PROJECTS[name]
-            if not project.get("prod"):
-                continue
-            if token is None and not dryrun:
-                token = getpass.getpass("Please provide an access token: ")
-            tasks.pip_install(project["url"], token=token, ref=project["prod"])
 
-        with contextlib.suppress(ModuleNotFoundError):
-            from bigq.nb.utils import check_notebook
-
-            return check_notebook()
-        return "bigq not installed"
-
-    # TODO
-    return
-
-    token = None
-    for name in projects:
-        project = PROJECTS[name]
-
-        if mode == "dev-install" and token is None:
-            token = getpass.getpass(f"Please provide the token for [{name}]: ")
-
-        dst = pathresolver(project["destdir"])
-        if mode == "dev-install":
-            tasks.git_clone(dst, url=project["url"], token=token)
-
-        tasks.add_pypath(dst / "src")
-
-    # moment of truth
-    from bigq.nb.utils import check_notebook
-
-    print("Verify system:")
-    return check_notebook()
+#     if mode == "prod":
+#         token = None
+#         for name in PROJECTS:
+#             project = PROJECTS[name]
+#             if not project.get("prod"):
+#                 continue
+#             if token is None and not dryrun:
+#                 token = getpass.getpass("Please provide an access token: ")
+#             tasks.pip_install(project["url"], token=token, ref=project["prod"])
+#
+#         with contextlib.suppress(ModuleNotFoundError):
+#             from bigq.nb.utils import check_notebook
+#
+#             return check_notebook()
+#         return "bigq not installed"
+#
+#     # TODO
+#     return
+#
+#     token = None
+#     for name in projects:
+#         project = PROJECTS[name]
+#
+#         if mode == "dev-install" and token is None:
+#             token = getpass.getpass(f"Please provide the token for [{name}]: ")
+#
+#         dst = pathresolver(project["destdir"])
+#         if mode == "dev-install":
+#             tasks.git_clone(dst, url=project["url"], token=token)
+#
+#         tasks.add_pypath(dst / "src")
+#
+#     # moment of truth
+#     from bigq.nb.utils import check_notebook
+#
+#     print("Verify system:")
+#     return check_notebook()
 
 
 if __name__ == "__main__":
-    setup("prod", dryrun=True)
+    # setup("prod", dryrun=True)
     # setup("dev", dryrun=True)
-    # setup("dev-install", dryrun=True)
+    setup("dev-install", dryrun=True)

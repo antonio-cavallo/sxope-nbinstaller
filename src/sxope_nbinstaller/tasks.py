@@ -85,7 +85,7 @@ def pip_install(url, token="", ref="", test=False):
 
 
 @task("checkout source code in '{destdir}'")
-def git_clone(destdir, url, token="", ref="", test=False):
+def git_clone(destdir, url, token="", branch="", dryrun=False):
     destdir = Path(destdir).absolute()
     if destdir.exists():
         printwarn(
@@ -98,7 +98,7 @@ not checking out sxope-bigq
         )
         return
 
-    o = urlfixer(url, token, ref)
+    o = urlfixer(url, token)
 
     cmd = [
         "git",
@@ -106,7 +106,10 @@ not checking out sxope-bigq
         o.geturl(),
         destdir,
     ]
-    if test:
+    if branch:
+        cmd.insert(2, "--branch")
+        cmd.insert(3, branch)
+    if dryrun:
         print(" ".join(str(c) for c in cmd))
         return
     run = subprocess.check_output([str(c) for c in cmd], encoding="utf-8")
@@ -115,9 +118,11 @@ not checking out sxope-bigq
         print(run)
 
 
-@task("adding '{path}' to PYTHONPATH")
-def add_pypath(path):
-    sys.path.insert(0, str(path))
+@task("updating PYTHONPATH")
+def add_pypath(path, dryrun=False):
+    print(f"adding {path}")
+    if not dryrun:
+        sys.path.insert(0, str(path))
 
 
 @task("mounting gdrive under '{mountpoint}' (readonly? {readonly})")

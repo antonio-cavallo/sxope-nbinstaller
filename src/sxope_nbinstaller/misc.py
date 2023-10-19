@@ -58,7 +58,7 @@ printtask = functools.partial(printx, tag=RH)
 def task(msg, anyway=None):
     def _fn0(fn):
         def _fn1(*args, **kwargs):
-            from inspect import getcallargs
+            from inspect import getcallargs, signature
 
             runmode = RUNMODE
             if args and isinstance(args[0], RunMode):
@@ -68,9 +68,11 @@ def task(msg, anyway=None):
             print(f"{RH} {msg.format(**kwargs)} .. ", end="")
             lead = "   | "
             if (runmode & RunMode.DRYRUN) and not anyway:
-                print(OK)
-                print(indent(f"(dry-run) {fn.__name__}(**{kwargs})", lead))
-                return
+                if "dryrun" not in signature(fn).parameters:
+                    print(OK)
+                    print(indent(f"(dry-run) {fn.__name__}(**{kwargs})", lead))
+                    return
+                kwargs["dryrun"] = True
 
             try:
                 with mock.patch("sys.stdout", new_callable=io.StringIO) as mck:
