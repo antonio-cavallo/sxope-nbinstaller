@@ -121,8 +121,12 @@ def add_pypath(path):
 
 
 @task("mounting gdrive under '{mountpoint}' (readonly? {readonly})")
-def mount(mountpoint: Path, readonly: bool = True) -> Path:
+def mount(mountpoint: Path, readonly: bool = True) -> Path | None:
     from google.colab import drive
+
+    if not mountpoint:
+        print("not mounting GDrive")
+        return None
 
     with mock.patch("sys.stdout", new_callable=io.StringIO):
         drive.mount(str(mountpoint), force_remount=True, readonly=readonly)

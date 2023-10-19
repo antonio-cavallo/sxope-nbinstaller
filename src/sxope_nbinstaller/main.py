@@ -65,7 +65,6 @@ def setup(
             str(path).format(mountpoint=mountpoint, projectsdir=projectsdir)
         ).absolute()
 
-    mountpoint = Path(mountpoint).absolute()
     projectsdir = pathresolver(projectsdir)
     projects = ([projects] if isinstance(projects, str) else projects) or list(
         PROJECTS
@@ -76,6 +75,7 @@ def setup(
 
     misc.set_runmode(misc.RunMode.DRYRUN if dryrun else None)
 
+    mountpoint = Path(mountpoint).absolute() if mountpoint else None
     tasks.report(mode, mountpoint, projectsdir, projects, PROJECTS, writeable)
 
     # mount the GDrive
