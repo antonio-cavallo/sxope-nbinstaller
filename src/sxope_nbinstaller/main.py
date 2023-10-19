@@ -11,6 +11,8 @@ PROJECTS = {
     "bigq": {
         "url": "https://github.com/antonio-cavallo/sxope-bigq.git",
         "prod": "1e3d05c0b4df50299a459cd822349cce03f4de22",
+        "ask-token": True,
+        "dev": "",
         "destdir": "{projectsdir}/sxope-bigq",
         "pypath": "src",
     },
@@ -80,6 +82,29 @@ def setup(
 
     # mount the GDrive
     tasks.mount(mountpoint, readonly=not writeable)
+
+    for name in PROJECTS:
+        project = PROJECTS[name]
+        if mode == "prod":
+            if not project.get("prod"):
+                continue
+            token = None
+            if project.get("ask-token") and not dryrun:
+                token = getpass.getpass("Please provide an access token: ")
+            tasks.pip_install(project["url"], token=token, ref=project["prod"])
+        elif mode == "dev":
+            destdir = project.get("destdir")
+            destdir = projectsdir / destdir.format(
+                **{"projectsdir": projectsdir, **project}
+            )
+            pypath = destdir / project.get("pypath", "")
+            tasks.add_pypath(pypath)
+
+    with contextlib.suppress(ModuleNotFoundError):
+        from bigq.nb.utils import check_notebook
+
+        return check_notebook()
+    return "bigq not installed"
 
     if mode == "prod":
         token = None
