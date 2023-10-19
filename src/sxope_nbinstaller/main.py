@@ -30,7 +30,7 @@ def setup(
     mode="dev",
     mountpoint="/content/GDrive",
     projectsdir="{mountpoint}/MyDrive/Projects",
-    credentials="{mountpoint}/credentials.json",
+    credentials="{mountpoint}/MyDrive/credentials.json",
     projects=None,
     writeable=None,
     dryrun=False,
