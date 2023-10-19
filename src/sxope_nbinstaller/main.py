@@ -9,7 +9,7 @@ from . import tasks, misc
 PROJECTS = {
     "bigq": {
         "url": "https://github.com/antonio-cavallo/sxope-bigq.git",
-        "prod": "1e3d05c0b4df50299a459cd822349cce03f4de22",  # check out this in prod
+        "prod": "v0.0.2",  # check out this in prod
         "ask-token": True,
         "dev": "",  # check out this in dev-install
         "destdir": "{projectsdir}/sxope-bigq",
