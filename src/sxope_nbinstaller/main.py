@@ -1,6 +1,7 @@
 import getpass
 import contextlib
 from pathlib import Path
+import json
 
 from . import tasks, misc
 
@@ -29,6 +30,7 @@ def setup(
     mode="dev",
     mountpoint="/content/GDrive",
     projectsdir="{mountpoint}/MyDrive/Projects",
+    credentials="{mountpoint}/credentials.json",
     projects=None,
     writeable=None,
     dryrun=False,
@@ -83,13 +85,21 @@ def setup(
     # mount the GDrive
     tasks.mount(mountpoint, readonly=not writeable)
 
+    tokens = {}
+    if credentials:
+        if (path := pathresolver(credentials)).exists():
+            misc.printtask(f"loading credentials from {path}")
+            tokens = json.loads(path.read_text())
+        else:
+            misc.printwarn(f"cannot find credentials file in {path}")
+
     for name in PROJECTS:
         project = PROJECTS[name]
         if mode == "prod":
             if not project.get("prod"):
                 continue
-            token = None
-            if project.get("ask-token") and not dryrun:
+            token = tokens.get(name, None)
+            if not token and project.get("ask-token") and not dryrun:
                 token = getpass.getpass("Please provide an access token: ")
             tasks.pip_install(project["url"], token=token, ref=project["prod"])
         elif mode in {"dev", "dev-install"}:
@@ -100,8 +110,8 @@ def setup(
             pypath = destdir / project.get("pypath", "")
 
             if mode == "dev-install":
-                token = None
-                if project.get("ask-token") and not dryrun:
+                token = tokens.get(name, None)
+                if not token and project.get("ask-token") and not dryrun:
                     token = getpass.getpass("Please provide an access token: ")
                 tasks.git_clone(
                     destdir, url=project["url"], token=token, branch=project.get("dev")
