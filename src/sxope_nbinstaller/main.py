@@ -15,14 +15,14 @@ PROJECTS = {
         "destdir": "{projectsdir}/sxope-bigq",
         "pypath": "src",
     },
-    # "alphalens": {
-    #     "url": "https://github.com/antonio-cavallo/alphalens.git",
-    #     "prod": "ng",
-    #     "ask-token": False,
-    #     "dev": "ng",  # check out this in dev-install
-    #     "destdir": "{projectsdir}/alphalens",
-    #     "pypath": "",
-    # },
+    "alphalens": {
+        "url": "https://github.com/antonio-cavallo/alphalens.git",
+        "prod": "ng",
+        "ask-token": False,
+        "dev": "ng",  # check out this in dev-install
+        "destdir": "{projectsdir}/alphalens",
+        "pypath": "",
+    },
 }
 
 
