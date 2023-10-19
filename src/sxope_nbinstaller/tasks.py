@@ -74,7 +74,7 @@ def pip_install(url, token="", ref="", test=False):
     scheme = o.scheme
     if not scheme.startswith("git+"):
         o = o._replace(scheme=f"git+{o.scheme}")
-    cmd = ["pip", "install", "--force-reinstall", o.geturl()]
+    cmd = ["pip", "install", "--quiet", "--force-reinstall", o.geturl()]
     if test:
         print(" ".join(str(c) for c in cmd))
         return
