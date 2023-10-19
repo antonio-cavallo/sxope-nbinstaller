@@ -93,7 +93,7 @@ def setup(
         else:
             misc.printwarn(f"cannot find credentials file in {path}")
 
-    for name in PROJECTS:
+    for name in projects:
         project = PROJECTS[name]
         if mode == "prod":
             if not project.get("prod"):
